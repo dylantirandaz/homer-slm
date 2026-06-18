@@ -109,12 +109,18 @@ class OdysseyChatModel:
         adapter_path: str | None,
         max_tokens: int,
         temperature: float,
+        top_p: float,
+        top_k: int,
+        min_p: float,
         repetition_penalty: float,
     ):
         self.model_id = model_id
         self.adapter_path = adapter_path
         self.max_tokens = max_tokens
         self.temperature = temperature
+        self.top_p = top_p
+        self.top_k = top_k
+        self.min_p = min_p
         self.repetition_penalty = repetition_penalty
         self.model: Any | None = None
         self.tokenizer: Any | None = None
@@ -167,12 +173,17 @@ class OdysseyChatModel:
 
     def reply(self, messages: list[dict[str, str]]) -> str:
         self.load()
-        sampler = self._make_sampler(temp=self.temperature, top_p=0.0, top_k=0)
+        sampler = self._make_sampler(
+            temp=self.temperature,
+            top_p=self.top_p,
+            top_k=self.top_k,
+            min_p=self.min_p,
+        )
         logits_processors = self._make_logits_processors(
             repetition_penalty=self.repetition_penalty,
             repetition_context_size=160,
         )
-        return self._generate(
+        answer = self._generate(
             self.model,
             self.tokenizer,
             prompt=self.format_prompt(messages),
@@ -180,7 +191,64 @@ class OdysseyChatModel:
             sampler=sampler,
             logits_processors=logits_processors,
             verbose=False,
-        ).strip()
+        )
+        return clean_reply(answer)
+
+
+def normalize_for_dedupe(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def collapse_repeated_halves(text: str) -> str:
+    words = text.split()
+    if len(words) < 24 or len(words) % 2:
+        return text
+    midpoint = len(words) // 2
+    first = normalize_for_dedupe(" ".join(words[:midpoint]))
+    second = normalize_for_dedupe(" ".join(words[midpoint:]))
+    if first and first == second:
+        return " ".join(words[:midpoint]).strip()
+    return text
+
+
+def dedupe_repeated_paragraphs(text: str) -> str:
+    paragraphs = [paragraph.strip() for paragraph in re.split(r"\n{2,}", text) if paragraph.strip()]
+    if len(paragraphs) < 2:
+        return text.strip()
+    deduped = []
+    seen = set()
+    for paragraph in paragraphs:
+        key = normalize_for_dedupe(paragraph)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(paragraph)
+    return "\n\n".join(deduped).strip()
+
+
+def dedupe_repeated_sentences(text: str) -> str:
+    pieces = re.split(r"(?<=[.!?])\s+", text.strip())
+    if len(pieces) < 2:
+        return text.strip()
+    deduped = []
+    seen = set()
+    for piece in pieces:
+        sentence = piece.strip()
+        if not sentence:
+            continue
+        key = normalize_for_dedupe(sentence)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(sentence)
+    return " ".join(deduped).strip()
+
+
+def clean_reply(text: str) -> str:
+    text = text.strip()
+    text = collapse_repeated_halves(text)
+    text = dedupe_repeated_paragraphs(text)
+    return dedupe_repeated_sentences(text)
 
 
 def clean_messages(raw: Any) -> list[dict[str, str]]:
@@ -263,7 +331,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-id", default="mlx-community/Qwen2.5-0.5B-Instruct-4bit")
     parser.add_argument("--adapter-path", default="outputs/adapters/odyssey-qwen25-0.5b")
     parser.add_argument("--max-tokens", type=int, default=420)
-    parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--temperature", type=float, default=0.75)
+    parser.add_argument("--top-p", type=float, default=0.9)
+    parser.add_argument("--top-k", type=int, default=40)
+    parser.add_argument("--min-p", type=float, default=0.0)
     parser.add_argument("--repetition-penalty", type=float, default=1.18)
     return parser.parse_args()
 
@@ -276,6 +347,9 @@ def main() -> int:
         adapter_path=adapter_path,
         max_tokens=args.max_tokens,
         temperature=args.temperature,
+        top_p=args.top_p,
+        top_k=args.top_k,
+        min_p=args.min_p,
         repetition_penalty=args.repetition_penalty,
     )
     server = ThreadingHTTPServer((args.host, args.port), make_handler(chat_model))

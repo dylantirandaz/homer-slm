@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from odyssey.io import write_jsonl
 from odyssey.prompts import SYSTEM_PROMPT, training_user_prompt
-from odyssey.text import chunk_words, extractive_summary, normalize_whitespace, word_count
+from odyssey.text import chunk_words, extract_odyssey_body, extractive_summary, word_count
 
 
 def parse_args() -> argparse.Namespace:
@@ -33,7 +33,7 @@ def main() -> int:
     if not source.exists():
         print(f"Missing {source}; run scripts/download_odyssey.py first.", file=sys.stderr)
         return 2
-    text = normalize_whitespace(source.read_text(encoding="utf-8"))
+    text = extract_odyssey_body(source.read_text(encoding="utf-8"))
     chunks = []
     for index, chunk in enumerate(chunk_words(text, args.chunk_size, args.overlap)):
         chunks.append(
@@ -83,4 +83,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

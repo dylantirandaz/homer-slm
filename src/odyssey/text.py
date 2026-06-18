@@ -57,6 +57,21 @@ def strip_gutenberg_boilerplate(text: str) -> str:
     return normalize_whitespace(text)
 
 
+def extract_odyssey_body(text: str) -> str:
+    text = strip_gutenberg_boilerplate(text)
+    start = re.search(r"(?m)^BOOK I\s*$\s*^THE GODS", text)
+    if start:
+        title_start = text.rfind("THE ODYSSEY", 0, start.start())
+        if title_start != -1 and start.start() - title_start < 120:
+            text = text[title_start:]
+        else:
+            text = text[start.start() :]
+    end = re.search(r"(?m)^FOOTNOTES:\s*$", text)
+    if end:
+        text = text[: end.start()]
+    return normalize_whitespace(text)
+
+
 def word_count(text: str) -> int:
     return len(text.split())
 
