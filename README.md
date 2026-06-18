@@ -18,6 +18,12 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+Or use the Makefile:
+
+```bash
+make setup
+```
+
 If the system Python is too old for the current MLX package, install a newer Python with Homebrew:
 
 ```bash
@@ -38,6 +44,12 @@ python scripts/ingest.py
 python scripts/chunk.py --chunk-size 900 --overlap 80
 ```
 
+Equivalent Makefile shortcut:
+
+```bash
+make data
+```
+
 ## Training Data
 
 Prepare bootstrapped compression examples for LoRA fine-tuning:
@@ -51,6 +63,12 @@ python scripts/prepare_training_data.py \
 ```
 
 The training labels are extractive philosophical digests generated from the public-domain corpus. They are not used as a runtime compressor; they provide a compression curriculum for the LoRA adapter.
+
+Equivalent Makefile shortcut:
+
+```bash
+make training-data
+```
 
 ## Train
 
@@ -111,6 +129,14 @@ Show the terminal view:
 python scripts/show_run.py
 ```
 
+Equivalent Makefile shortcuts:
+
+```bash
+make train
+make run
+make show
+```
+
 Final files are written to:
 
 ```text
@@ -118,3 +144,5 @@ outputs/final_paragraph.txt
 outputs/final_sentence.txt
 data/generations/
 ```
+
+The first local run is summarized in `results/first-run.md`.

@@ -10,7 +10,8 @@ data/training/mlx/*.jsonl
 data/generations/gen_*/
 
 outputs/adapters/
-outputs/logs/
-outputs/runs/
+outputs/logs/*
+!outputs/logs/README.md
+outputs/runs/*
+!outputs/runs/README.md
 outputs/final_*.txt
-
