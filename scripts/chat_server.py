@@ -20,8 +20,11 @@ SYSTEM_PROMPT = (
     "Homer's Odyssey in English translation. Answer questions about the poem, its "
     "characters, plot, places, motifs, and scenes. Be direct and concrete. If a "
     "question asks for something outside the Odyssey, say that it is outside your "
-    "Odyssey training focus. Use the provided Odyssey excerpts as grounding. If the "
-    "excerpts do not support an answer, say what is unclear instead of inventing."
+    "Odyssey training focus. Samuel Butler's translation usually calls Odysseus "
+    "Ulysses, Athena Minerva, and Zeus Jove; treat those names as equivalent. Use "
+    "the provided Odyssey excerpts as grounding. If the excerpts do not support an "
+    "answer, say what is unclear instead of inventing. Answer in your own words; "
+    "do not continue or copy long passages unless the user asks for a quotation."
 )
 
 
@@ -53,13 +56,63 @@ STOPWORDS = {
     "would",
 }
 
+ALIASES = {
+    "athena": {"minerva"},
+    "athene": {"minerva"},
+    "jove": {"zeus"},
+    "minerva": {"athena", "athene"},
+    "odysseus": {"ulysses"},
+    "ulysses": {"odysseus"},
+    "zeus": {"jove"},
+}
+
+CONCEPT_NOTES = {
+    "athena": "Athena, called Minerva in Butler's translation, is the goddess who repeatedly aids Odysseus and Telemachus.",
+    "athene": "Athena, called Minerva in Butler's translation, is the goddess who repeatedly aids Odysseus and Telemachus.",
+    "calypso": "Calypso is the nymph who keeps Odysseus on her island before the gods order his release.",
+    "circe": "Circe is the enchantress who turns Odysseus's men into swine and later helps him continue his voyage.",
+    "jove": "Zeus, called Jove in Butler's translation, is the chief Olympian god whose will frames the poem's divine order.",
+    "minerva": "Minerva is Butler's name for Athena, the goddess who repeatedly aids Odysseus and Telemachus.",
+    "odysseus": "Odysseus, called Ulysses in Butler's translation, is the king of Ithaca, husband of Penelope, father of Telemachus, and the Trojan War veteran struggling to return home.",
+    "penelope": "Penelope is Odysseus's wife in Ithaca, known for resisting the suitors while waiting for his return.",
+    "polyphemus": "Polyphemus is the Cyclops blinded by Odysseus after trapping him and his men in a cave.",
+    "poseidon": "Poseidon is the sea god who persecutes Odysseus after the blinding of Polyphemus.",
+    "telemachus": "Telemachus is the son of Odysseus and Penelope, who searches for news of his father and helps confront the suitors.",
+    "ulysses": "Ulysses is Butler's name for Odysseus: king of Ithaca, husband of Penelope, father of Telemachus, and the Trojan War veteran struggling to return home.",
+    "zeus": "Zeus, called Jove in Butler's translation, is the chief Olympian god whose will frames the poem's divine order.",
+}
+
+
+class OdysseyHTTPServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+
+    def server_bind(self) -> None:
+        self.socket.bind(self.server_address)
+        self.server_address = self.socket.getsockname()
+        self.server_name = str(self.server_address[0])
+        self.server_port = int(self.server_address[1])
+
 
 def tokenize(text: str) -> set[str]:
-    return {
+    tokens = {
         token
         for token in re.findall(r"[a-z][a-z'-]*", text.lower())
         if len(token) > 2 and token not in STOPWORDS
     }
+    for token in list(tokens):
+        tokens.update(ALIASES.get(token, set()))
+    return tokens
+
+
+def concept_notes(query: str) -> list[str]:
+    notes = []
+    seen = set()
+    for token in tokenize(query):
+        note = CONCEPT_NOTES.get(token)
+        if note and note not in seen:
+            seen.add(note)
+            notes.append(note)
+    return notes[:4]
 
 
 class OdysseyRetriever:
@@ -147,15 +200,24 @@ class OdysseyChatModel:
         self.load()
         assert self.tokenizer is not None
         latest_question = messages[-1]["content"]
+        notes = concept_notes(latest_question)
         excerpts = self.retriever.excerpts(latest_question)
         grounded_question = latest_question
-        if excerpts:
+        if notes:
+            grounded_question = (
+                "Odyssey background facts:\n"
+                + "\n".join(f"- {note}" for note in notes)
+                + "\n\nQuestion:\n"
+                + latest_question
+                + "\n\nAnswer the question directly in your own words."
+            )
+        elif excerpts:
             grounded_question = (
                 "Relevant Odyssey excerpts:\n"
                 + "\n\n".join(excerpts)
                 + "\n\nQuestion:\n"
                 + latest_question
-                + "\n\nAnswer using the excerpts when they are relevant."
+                + "\n\nAnswer the question directly in your own words. Use the excerpts as evidence only; do not continue the passage."
             )
         chat = [{"role": "system", "content": SYSTEM_PROMPT}]
         chat.extend(messages[-10:-1])
@@ -331,7 +393,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-id", default="mlx-community/Qwen2.5-0.5B-Instruct-4bit")
     parser.add_argument("--adapter-path", default="outputs/adapters/odyssey-qwen25-0.5b")
     parser.add_argument("--max-tokens", type=int, default=420)
-    parser.add_argument("--temperature", type=float, default=0.75)
+    parser.add_argument("--temperature", type=float, default=0.65)
     parser.add_argument("--top-p", type=float, default=0.9)
     parser.add_argument("--top-k", type=int, default=40)
     parser.add_argument("--min-p", type=float, default=0.0)
@@ -352,7 +414,7 @@ def main() -> int:
         min_p=args.min_p,
         repetition_penalty=args.repetition_penalty,
     )
-    server = ThreadingHTTPServer((args.host, args.port), make_handler(chat_model))
+    server = OdysseyHTTPServer((args.host, args.port), make_handler(chat_model))
     print(f"Serving Odyssey SLM chat at http://{args.host}:{args.port}")
     print(f"Model: {args.model_id}")
     print(f"Adapter: {args.adapter_path or 'none'}")

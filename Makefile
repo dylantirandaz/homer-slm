@@ -6,7 +6,7 @@ FULL_MODEL_ID ?= mlx-community/Qwen2.5-0.5B-Instruct-bf16
 ADAPTER ?= outputs/adapters/odyssey-qwen25-0.5b
 FULL_ADAPTER ?= outputs/adapters/odyssey-qwen25-0.5b-full
 PORT ?= 8765
-CHAT_TEMPERATURE ?= 0.75
+CHAT_TEMPERATURE ?= 0.65
 CHAT_TOP_P ?= 0.9
 CHAT_TOP_K ?= 40
 

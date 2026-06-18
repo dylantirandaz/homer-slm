@@ -87,10 +87,12 @@ To chat with the full-trained bf16 model instead:
 make chat-full
 ```
 
+`chat-full` is useful for inspecting the continued-pretraining checkpoint. For normal chat, `make chat` is currently the better surface because it uses the Odyssey LoRA chat adapter plus retrieval grounding.
+
 Chat decoding is probabilistic by default:
 
 ```text
-temperature=0.75 top_p=0.9 top_k=40
+temperature=0.65 top_p=0.9 top_k=40
 ```
 
 Override those settings with `CHAT_TEMPERATURE`, `CHAT_TOP_P`, and `CHAT_TOP_K` when running `make chat`.
