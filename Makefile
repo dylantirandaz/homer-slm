@@ -10,7 +10,7 @@ CHAT_TEMPERATURE ?= 0.75
 CHAT_TOP_P ?= 0.9
 CHAT_TOP_K ?= 40
 
-.PHONY: help setup data pretrain-data train train-full chat output-dirs
+.PHONY: help setup data pretrain-data train train-full chat chat-full output-dirs
 
 help:
 	@printf "Minimum Viable Odyssey\n\n"
@@ -21,6 +21,7 @@ help:
 	@printf "  train   Run MLX LoRA chat/summarization tuning for MODEL_ID\n"
 	@printf "  train-full  Run full-parameter continued training on Odyssey text\n"
 	@printf "  chat    Serve the local Odyssey SLM chat UI with probabilistic decoding\n"
+	@printf "  chat-full  Serve the full-trained Odyssey SLM chat UI\n"
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -46,3 +47,6 @@ train-full: output-dirs
 
 chat:
 	$(PY) scripts/chat_server.py --model-id $(MODEL_ID) --adapter-path $(ADAPTER) --port $(PORT) --temperature $(CHAT_TEMPERATURE) --top-p $(CHAT_TOP_P) --top-k $(CHAT_TOP_K)
+
+chat-full:
+	$(PY) scripts/chat_server.py --model-id $(FULL_MODEL_ID) --adapter-path $(FULL_ADAPTER) --port $(PORT) --temperature $(CHAT_TEMPERATURE) --top-p $(CHAT_TOP_P) --top-k $(CHAT_TOP_K)

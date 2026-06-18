@@ -81,6 +81,12 @@ The chat server uses the fine-tuned adapter by default:
 outputs/adapters/odyssey-qwen25-0.5b/
 ```
 
+To chat with the full-trained bf16 model instead:
+
+```bash
+make chat-full
+```
+
 Chat decoding is probabilistic by default:
 
 ```text
