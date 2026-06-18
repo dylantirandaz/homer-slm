@@ -110,6 +110,17 @@ python scripts/run_pipeline.py \
   --max-input-words 1100
 ```
 
+Each run writes a timestamped essay directory:
+
+```text
+outputs/runs/run_YYYYMMDDTHHMMSSZ/README.md
+outputs/runs/run_YYYYMMDDTHHMMSSZ/essays/gen_001.md
+outputs/runs/run_YYYYMMDDTHHMMSSZ/essays/gen_002.md
+...
+```
+
+Each generation essay explains what that generation appears to understand, what it preserves, what it loses or flattens, what it overweights, and what questions the next generation should test.
+
 For the full corpus, expect a long run:
 
 ```bash
@@ -134,16 +145,15 @@ Equivalent Makefile shortcuts:
 ```bash
 make train
 make run
+make essays
 make trace
 make show
 ```
 
-Final files are written to:
+To write essays from existing `data/generations/` files without rerunning compression:
 
-```text
-outputs/final_paragraph.txt
-outputs/final_sentence.txt
-data/generations/
+```bash
+make essays
 ```
 
 The absorption trace is written to:
@@ -160,5 +170,7 @@ By default, `make trace` records the compression adapter but uses the base instr
 ```bash
 make trace COMMENTARY_ADAPTER=outputs/adapters/philosophy-compressor
 ```
+
+The old final paragraph/sentence files are now legacy debug artifacts. They are only written by `scripts/run_pipeline.py --write-legacy-final` and should not be treated as the main measurement of a run.
 
 The first local run is summarized in `results/first-run.md`.

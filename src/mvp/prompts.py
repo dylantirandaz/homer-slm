@@ -54,3 +54,31 @@ def final_sentence_prompt(input_text: str) -> str:
         "Final sentence:"
     )
 
+
+def generation_essay_prompt(
+    generation: int,
+    generation_text: str,
+    target_word_count: int,
+    retained_concepts: list[str],
+    lost_concepts: list[str],
+    introduced_concepts: list[str],
+    retention_ratio: float,
+) -> str:
+    retained = ", ".join(retained_concepts[:24]) or "none detected"
+    lost = ", ".join(lost_concepts[:24]) or "none detected"
+    introduced = ", ".join(introduced_concepts[:16]) or "none detected"
+    return (
+        "Read the surviving philosophical text below. Write one concise paragraph "
+        "describing what this text appears to understand. Do not write headings. Do "
+        "not discuss the experiment, compression, generations, data, or metrics. Do "
+        "not mention any philosopher or school not named in the surviving text. Do "
+        "not claim the text preserves all of philosophy. Be concrete and provisional.\n\n"
+        f"Generation: {generation}\n"
+        f"Target length: about {min(target_word_count, 180)} words\n"
+        f"Retained concepts: {retained}\n"
+        f"Lost or muted concepts: {lost}\n"
+        f"Introduced concepts: {introduced}\n\n"
+        "Surviving generation text:\n"
+        f"{generation_text}\n\n"
+        "One-paragraph reading:"
+    )

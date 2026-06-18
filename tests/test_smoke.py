@@ -6,7 +6,9 @@ from pathlib import Path
 
 from mvp.analysis import concept_coverage
 from mvp.compression import group_records
+from mvp.essays import dedupe_repeated_paragraphs
 from mvp.io import read_jsonl, word_count, write_jsonl
+from mvp.prompts import generation_essay_prompt
 from mvp.text import chunk_words, extractive_philosophy_digest, truncate_words
 
 
@@ -47,6 +49,27 @@ class SmokeTests(unittest.TestCase):
         self.assertIn("justice", coverage["lost_concepts"])
         self.assertIn("substance", coverage["lost_concepts"])
         self.assertAlmostEqual(coverage["retention_ratio"], 0.5)
+
+    def test_generation_essay_prompt_requests_concise_model_reading(self) -> None:
+        prompt = generation_essay_prompt(
+            generation=2,
+            generation_text="Knowledge remains, but justice is muted.",
+            target_word_count=500,
+            retained_concepts=["knowledge"],
+            lost_concepts=["justice"],
+            introduced_concepts=[],
+            retention_ratio=0.5,
+        )
+        self.assertIn("one concise paragraph", prompt)
+        self.assertIn("Do not discuss the experiment", prompt)
+        self.assertIn("Knowledge remains", prompt)
+
+    def test_dedupe_repeated_paragraphs(self) -> None:
+        text = "A claim remains.\n\nA claim remains.\n\nA different question remains."
+        self.assertEqual(
+            dedupe_repeated_paragraphs(text),
+            "A claim remains.\n\nA different question remains.",
+        )
 
 
 if __name__ == "__main__":

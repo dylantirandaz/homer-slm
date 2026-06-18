@@ -4,9 +4,13 @@ PY := $(VENV)/bin/python
 MODEL ?= mlx-community/Qwen2.5-0.5B-Instruct-4bit
 ADAPTER ?= outputs/adapters/philosophy-compressor
 COMMENTARY_ADAPTER ?=
+ESSAY_ADAPTER ?=
+RUN_ID ?=
 TRACE_COMMENTARY_ARG := $(if $(COMMENTARY_ADAPTER),--commentary-adapter-path $(COMMENTARY_ADAPTER),)
+ESSAY_ADAPTER_ARG := $(if $(ESSAY_ADAPTER),--essay-adapter-path $(ESSAY_ADAPTER),)
+RUN_ID_ARG := $(if $(RUN_ID),--run-id $(RUN_ID),)
 
-.PHONY: help setup download ingest chunk data training-data train run trace show test output-dirs
+.PHONY: help setup download ingest chunk data training-data train run essays trace show test output-dirs
 
 help:
 	@printf "Minimum Viable Philosophy\n"
@@ -16,7 +20,8 @@ help:
 	@printf "  data            Download, ingest, and chunk the corpus\n"
 	@printf "  training-data   Build MLX LoRA training data\n"
 	@printf "  train           Fine-tune the local MLX LoRA adapter\n"
-	@printf "  run             Run recursive compression\n"
+	@printf "  run             Run recursive compression and write generation essays\n"
+	@printf "  essays          Write generation essays from existing run files\n"
 	@printf "  trace           Analyze concept absorption/loss across generations\n"
 	@printf "  show            Print the latest run summary\n"
 	@printf "  test            Run smoke tests\n"
@@ -64,7 +69,10 @@ run: output-dirs
 		--batch-size 2 \
 		--schedule 260,160,90,45,20 \
 		--per-text-chunks 2 \
-		--max-input-words 1100
+		--max-input-words 1100 $(RUN_ID_ARG) $(ESSAY_ADAPTER_ARG)
+
+essays: output-dirs
+	$(PY) scripts/write_essays.py --model $(MODEL) --compression-adapter-path $(ADAPTER) $(RUN_ID_ARG) $(ESSAY_ADAPTER_ARG)
 
 trace: output-dirs
 	$(PY) scripts/analyze_absorption.py --model $(MODEL) --adapter-path $(ADAPTER) $(TRACE_COMMENTARY_ARG)
