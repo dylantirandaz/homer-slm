@@ -18,6 +18,7 @@ from odyssey.scratch_model import ByteGPT, ScratchConfig
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate text from a scratch-trained Odyssey byte GPT.")
     parser.add_argument("--checkpoint", default="outputs/scratch/odyssey-byte-gpt")
+    parser.add_argument("--weights", default="weights.safetensors")
     parser.add_argument("--prompt", default="Tell me, O Muse,")
     parser.add_argument("--tokens", type=int, default=500)
     parser.add_argument("--temperature", type=float, default=0.8)
@@ -49,9 +50,12 @@ def main() -> int:
     args = parse_args()
     checkpoint = ROOT / args.checkpoint
     metadata_path = checkpoint / "metadata.json"
-    weights_path = checkpoint / "weights.safetensors"
+    weights_path = Path(args.weights)
+    if not weights_path.is_absolute():
+        checkpoint_weights = checkpoint / weights_path
+        weights_path = checkpoint_weights if checkpoint_weights.exists() else ROOT / weights_path
     if not metadata_path.exists() or not weights_path.exists():
-        print(f"Missing scratch checkpoint at {checkpoint}", file=sys.stderr)
+        print(f"Missing scratch checkpoint metadata or weights: {metadata_path}, {weights_path}", file=sys.stderr)
         return 2
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))

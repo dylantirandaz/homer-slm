@@ -54,8 +54,14 @@ make train-scratch
 make generate-scratch
 ```
 
-This initializes a small transformer randomly and trains it only on the Odyssey body text. It does not use Qwen weights or a pretrained tokenizer. The default scratch run is 3,000 iterations.
+This initializes a small transformer randomly and trains it only on the Odyssey body text. It does not use Qwen weights or a pretrained tokenizer. The default scratch run is a 10,000-iteration, 6-layer byte GPT.
 The scratch model is a generation model, not an instruction/chat model; use it to inspect what the randomly initialized model absorbs from the Odyssey text.
+
+To compare an intermediate checkpoint:
+
+```bash
+make generate-scratch SCRATCH_WEIGHTS=002500_weights.safetensors
+```
 
 The adapter is written to:
 
@@ -73,6 +79,7 @@ The from-scratch checkpoint is written to:
 
 ```text
 outputs/scratch/odyssey-byte-gpt/
+outputs/scratch/odyssey-byte-gpt-10k/
 ```
 
 Training data is written to:

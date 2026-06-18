@@ -5,8 +5,16 @@ MODEL_ID ?= mlx-community/Qwen2.5-0.5B-Instruct-4bit
 FULL_MODEL_ID ?= mlx-community/Qwen2.5-0.5B-Instruct-bf16
 ADAPTER ?= outputs/adapters/odyssey-qwen25-0.5b
 FULL_ADAPTER ?= outputs/adapters/odyssey-qwen25-0.5b-full
-SCRATCH_OUT ?= outputs/scratch/odyssey-byte-gpt
-SCRATCH_ITERS ?= 3000
+SCRATCH_OUT ?= outputs/scratch/odyssey-byte-gpt-10k
+SCRATCH_ITERS ?= 10000
+SCRATCH_CONTEXT ?= 256
+SCRATCH_LAYERS ?= 6
+SCRATCH_HEADS ?= 8
+SCRATCH_D_MODEL ?= 256
+SCRATCH_MLP_DIM ?= 1024
+SCRATCH_EVAL_EVERY ?= 1000
+SCRATCH_SAVE_EVERY ?= 2500
+SCRATCH_WEIGHTS ?= weights.safetensors
 SCRATCH_PROMPT ?= Tell me, O Muse,
 PORT ?= 8765
 CHAT_TEMPERATURE ?= 0.65
@@ -51,10 +59,10 @@ train-full: output-dirs
 	$(PY) scripts/train_lora.py --fine-tune-type full --model-id $(FULL_MODEL_ID) --data data/training/pretrain --adapter-path $(FULL_ADAPTER) --iters 50 --batch-size 1 --num-layers -1 --learning-rate 5e-6 --no-mask-prompt --grad-checkpoint --steps-per-report 5 --steps-per-eval 25 --save-every 50 --max-seq-length 1024
 
 train-scratch: output-dirs
-	$(PY) scripts/pretrain_scratch.py --out $(SCRATCH_OUT) --iters $(SCRATCH_ITERS)
+	$(PY) scripts/pretrain_scratch.py --out $(SCRATCH_OUT) --iters $(SCRATCH_ITERS) --context-size $(SCRATCH_CONTEXT) --layers $(SCRATCH_LAYERS) --heads $(SCRATCH_HEADS) --d-model $(SCRATCH_D_MODEL) --mlp-dim $(SCRATCH_MLP_DIM) --eval-every $(SCRATCH_EVAL_EVERY) --save-every $(SCRATCH_SAVE_EVERY)
 
 generate-scratch:
-	$(PY) scripts/generate_scratch.py --checkpoint $(SCRATCH_OUT) --prompt "$(SCRATCH_PROMPT)"
+	$(PY) scripts/generate_scratch.py --checkpoint $(SCRATCH_OUT) --weights $(SCRATCH_WEIGHTS) --prompt "$(SCRATCH_PROMPT)"
 
 chat:
 	$(PY) scripts/chat_server.py --model-id $(MODEL_ID) --adapter-path $(ADAPTER) --port $(PORT) --temperature $(CHAT_TEMPERATURE) --top-p $(CHAT_TOP_P) --top-k $(CHAT_TOP_K)
