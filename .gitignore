@@ -4,14 +4,9 @@ __pycache__/
 .DS_Store
 
 data/raw/*.txt
-data/raw/metadata.jsonl
+data/raw/*.json
+data/processed/*.txt
 data/processed/*.jsonl
-data/training/mlx/*.jsonl
-data/generations/gen_*/
+data/training/
 
 outputs/adapters/
-outputs/logs/*
-!outputs/logs/README.md
-outputs/runs/*
-!outputs/runs/README.md
-outputs/final_*.txt
