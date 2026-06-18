@@ -3,8 +3,10 @@ VENV ?= .venv
 PY := $(VENV)/bin/python
 MODEL ?= mlx-community/Qwen2.5-0.5B-Instruct-4bit
 ADAPTER ?= outputs/adapters/philosophy-compressor
+COMMENTARY_ADAPTER ?=
+TRACE_COMMENTARY_ARG := $(if $(COMMENTARY_ADAPTER),--commentary-adapter-path $(COMMENTARY_ADAPTER),)
 
-.PHONY: help setup download ingest chunk data training-data train run show test output-dirs
+.PHONY: help setup download ingest chunk data training-data train run trace show test output-dirs
 
 help:
 	@printf "Minimum Viable Philosophy\n"
@@ -15,6 +17,7 @@ help:
 	@printf "  training-data   Build MLX LoRA training data\n"
 	@printf "  train           Fine-tune the local MLX LoRA adapter\n"
 	@printf "  run             Run recursive compression\n"
+	@printf "  trace           Analyze concept absorption/loss across generations\n"
 	@printf "  show            Print the latest run summary\n"
 	@printf "  test            Run smoke tests\n"
 	@printf "  output-dirs     Ensure output directories exist\n"
@@ -62,6 +65,9 @@ run: output-dirs
 		--schedule 260,160,90,45,20 \
 		--per-text-chunks 2 \
 		--max-input-words 1100
+
+trace: output-dirs
+	$(PY) scripts/analyze_absorption.py --model $(MODEL) --adapter-path $(ADAPTER) $(TRACE_COMMENTARY_ARG)
 
 show:
 	$(PY) scripts/show_run.py

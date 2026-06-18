@@ -23,16 +23,32 @@ def group_records(records: list[dict], batch_size: int) -> list[list[dict]]:
 
 
 class MlxGenerator:
-    def __init__(self, model_name: str, adapter_path: str | None = None, max_tokens: int = 768):
+    def __init__(
+        self,
+        model_name: str,
+        adapter_path: str | None = None,
+        max_tokens: int = 768,
+        temperature: float = 0.0,
+        top_p: float = 0.0,
+        top_k: int = 0,
+        repetition_penalty: float = 1.12,
+        repetition_context_size: int = 96,
+    ):
         self.model_name = model_name
         self.adapter_path = adapter_path
         self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.top_p = top_p
+        self.top_k = top_k
+        self.repetition_penalty = repetition_penalty
+        self.repetition_context_size = repetition_context_size
         self.model: Any | None = None
         self.tokenizer: Any | None = None
 
     def load(self) -> None:
         try:
             from mlx_lm import generate, load
+            from mlx_lm.sample_utils import make_logits_processors, make_sampler
         except ImportError as exc:
             raise RuntimeError(
                 "mlx-lm is not installed. Install requirements.txt inside the virtualenv first."
@@ -43,6 +59,8 @@ class MlxGenerator:
             kwargs["adapter_path"] = self.adapter_path
         self.model, self.tokenizer = load(self.model_name, **kwargs)
         self._generate = generate
+        self._make_sampler = make_sampler
+        self._make_logits_processors = make_logits_processors
 
     def _format_prompt(self, prompt: str) -> str:
         assert self.tokenizer is not None
@@ -63,11 +81,22 @@ class MlxGenerator:
             self.load()
 
         formatted = self._format_prompt(prompt)
+        sampler = self._make_sampler(
+            temp=self.temperature,
+            top_p=self.top_p,
+            top_k=self.top_k,
+        )
+        logits_processors = self._make_logits_processors(
+            repetition_penalty=self.repetition_penalty,
+            repetition_context_size=self.repetition_context_size,
+        )
         output = self._generate(
             self.model,
             self.tokenizer,
             prompt=formatted,
             max_tokens=max_tokens or self.max_tokens,
+            sampler=sampler,
+            logits_processors=logits_processors,
             verbose=False,
         )
         return output.strip()

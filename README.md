@@ -134,6 +134,7 @@ Equivalent Makefile shortcuts:
 ```bash
 make train
 make run
+make trace
 make show
 ```
 
@@ -143,6 +144,21 @@ Final files are written to:
 outputs/final_paragraph.txt
 outputs/final_sentence.txt
 data/generations/
+```
+
+The absorption trace is written to:
+
+```text
+outputs/runs/absorption_trace.jsonl
+outputs/runs/absorption_trace.md
+```
+
+The trace compares each child unit to its parent text with deterministic concept-retention metrics. It also asks the model to describe what the compressed child appears to understand, so the model's apparent understanding is separate from the retained/lost concept metrics.
+
+By default, `make trace` records the compression adapter but uses the base instruct model for understanding notes. This keeps the audit from inheriting the compressor adapter's tendency to summarize instead of explain. To audit with a specific commentary adapter:
+
+```bash
+make trace COMMENTARY_ADAPTER=outputs/adapters/philosophy-compressor
 ```
 
 The first local run is summarized in `results/first-run.md`.

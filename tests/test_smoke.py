@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from mvp.analysis import concept_coverage
 from mvp.compression import group_records
 from mvp.io import read_jsonl, word_count, write_jsonl
 from mvp.text import chunk_words, extractive_philosophy_digest, truncate_words
@@ -37,7 +38,16 @@ class SmokeTests(unittest.TestCase):
         groups = group_records([{"id": index} for index in range(5)], batch_size=2)
         self.assertEqual([[record["id"] for record in group] for group in groups], [[0, 1], [2, 3], [4]])
 
+    def test_concept_coverage_tracks_retention_and_loss(self) -> None:
+        coverage = concept_coverage(
+            "Knowledge, virtue, justice, and substance shape conduct.",
+            "Knowledge and virtue remain.",
+        )
+        self.assertEqual(coverage["retained_concepts"], ["knowledge", "virtue"])
+        self.assertIn("justice", coverage["lost_concepts"])
+        self.assertIn("substance", coverage["lost_concepts"])
+        self.assertAlmostEqual(coverage["retention_ratio"], 0.5)
+
 
 if __name__ == "__main__":
     unittest.main()
-
