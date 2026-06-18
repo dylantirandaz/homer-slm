@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+data/raw/*.txt
+data/raw/metadata.jsonl
+data/processed/*.jsonl
+data/training/mlx/*.jsonl
+data/generations/gen_*/
+
+outputs/adapters/
+outputs/logs/
+outputs/runs/
+outputs/final_*.txt
+
