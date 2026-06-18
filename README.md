@@ -29,6 +29,7 @@ python -m pip install -r requirements-mlx.txt
 ```bash
 make data
 make train
+make chat
 ```
 
 The adapter is written to:
@@ -43,4 +44,24 @@ Training data is written to:
 data/training/mlx/train.jsonl
 data/training/mlx/valid.jsonl
 data/training/mlx/test.jsonl
+```
+
+## Chat UI
+
+Start the local Greco-deco chat interface:
+
+```bash
+make chat
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8765
+```
+
+The chat server uses the fine-tuned adapter by default:
+
+```text
+outputs/adapters/odyssey-qwen25-0.5b/
 ```

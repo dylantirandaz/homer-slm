@@ -3,8 +3,9 @@ VENV ?= .venv
 PY := $(VENV)/bin/python
 MODEL_ID ?= mlx-community/Qwen2.5-0.5B-Instruct-4bit
 ADAPTER ?= outputs/adapters/odyssey-qwen25-0.5b
+PORT ?= 8765
 
-.PHONY: help setup data train output-dirs
+.PHONY: help setup data train chat output-dirs
 
 help:
 	@printf "Minimum Viable Odyssey\n\n"
@@ -12,6 +13,7 @@ help:
 	@printf "  setup   Create .venv and install base requirements\n"
 	@printf "  data    Download and prepare Odyssey chunks/training data\n"
 	@printf "  train   Run MLX LoRA training for MODEL_ID\n"
+	@printf "  chat    Serve the local Odyssey SLM chat UI\n"
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -28,3 +30,6 @@ data: output-dirs
 
 train: output-dirs
 	$(PY) scripts/train_lora.py --model-id $(MODEL_ID) --data data/training/mlx --adapter-path $(ADAPTER)
+
+chat:
+	$(PY) scripts/chat_server.py --model-id $(MODEL_ID) --adapter-path $(ADAPTER) --port $(PORT)

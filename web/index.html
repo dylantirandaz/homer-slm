@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Odyssey SLM</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="side">
+        <div class="brand">
+          <div class="mark">OS</div>
+          <div>
+            <h1>Odyssey SLM</h1>
+            <p>Qwen 0.5B LoRA</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Try</h2>
+          <button class="prompt" data-prompt="Summarize Odysseus' journey home in five beats.">Journey home</button>
+          <button class="prompt" data-prompt="What role does Penelope play in the Odyssey?">Penelope</button>
+          <button class="prompt" data-prompt="Explain hospitality in the Odyssey.">Hospitality</button>
+          <button class="prompt" data-prompt="Why is disguise important in the poem?">Disguise</button>
+        </div>
+
+        <div class="panel meta">
+          <h2>Local model</h2>
+          <p>Runs against the fine-tuned adapter in <code>outputs/adapters/odyssey-qwen25-0.5b</code>.</p>
+        </div>
+      </aside>
+
+      <section class="chat">
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">Ithaca terminal</span>
+            <h2>Ask the Odyssey model</h2>
+          </div>
+          <button id="clear" class="ghost">Clear</button>
+        </header>
+
+        <div id="messages" class="messages" aria-live="polite"></div>
+
+        <form id="composer" class="composer">
+          <textarea id="input" rows="1" placeholder="Ask about Odysseus, Penelope, Ithaca, the suitors..." autofocus></textarea>
+          <button id="send" type="submit">Send</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
