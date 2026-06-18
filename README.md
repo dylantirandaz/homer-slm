@@ -63,6 +63,18 @@ To compare an intermediate checkpoint:
 make generate-scratch SCRATCH_WEIGHTS=002500_weights.safetensors
 ```
 
+For a write-up of the scratch experiment:
+
+```text
+docs/teaching-a-tiny-model-to-dream-in-homer.md
+```
+
+Regenerate its local supporting artifacts with:
+
+```bash
+make blog-artifacts
+```
+
 The adapter is written to:
 
 ```text

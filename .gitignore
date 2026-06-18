@@ -10,4 +10,5 @@ data/processed/*.jsonl
 data/training/
 
 outputs/adapters/
+outputs/blog/
 outputs/scratch/

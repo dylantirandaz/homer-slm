@@ -16,12 +16,13 @@ SCRATCH_EVAL_EVERY ?= 1000
 SCRATCH_SAVE_EVERY ?= 2500
 SCRATCH_WEIGHTS ?= weights.safetensors
 SCRATCH_PROMPT ?= Tell me, O Muse,
+BLOG_OUT ?= outputs/blog
 PORT ?= 8765
 CHAT_TEMPERATURE ?= 0.65
 CHAT_TOP_P ?= 0.9
 CHAT_TOP_K ?= 40
 
-.PHONY: help setup data pretrain-data train train-full train-scratch generate-scratch chat chat-full output-dirs
+.PHONY: help setup data pretrain-data train train-full train-scratch generate-scratch blog-artifacts chat chat-full output-dirs
 
 help:
 	@printf "Minimum Viable Odyssey\n\n"
@@ -33,6 +34,7 @@ help:
 	@printf "  train-full  Run full-parameter continued training on Odyssey text\n"
 	@printf "  train-scratch  Pretrain a random-initialized byte GPT on Odyssey text\n"
 	@printf "  generate-scratch  Generate text from the scratch byte GPT\n"
+	@printf "  blog-artifacts  Write samples, metrics, and SVG loss chart for the blog\n"
 	@printf "  chat    Serve the local Odyssey SLM chat UI with probabilistic decoding\n"
 	@printf "  chat-full  Serve the full-trained Odyssey SLM chat UI\n"
 
@@ -63,6 +65,9 @@ train-scratch: output-dirs
 
 generate-scratch:
 	$(PY) scripts/generate_scratch.py --checkpoint $(SCRATCH_OUT) --weights $(SCRATCH_WEIGHTS) --prompt "$(SCRATCH_PROMPT)"
+
+blog-artifacts:
+	$(PY) scripts/write_blog_artifacts.py --out $(BLOG_OUT) --checkpoint $(SCRATCH_OUT)
 
 chat:
 	$(PY) scripts/chat_server.py --model-id $(MODEL_ID) --adapter-path $(ADAPTER) --port $(PORT) --temperature $(CHAT_TEMPERATURE) --top-p $(CHAT_TOP_P) --top-k $(CHAT_TOP_K)
