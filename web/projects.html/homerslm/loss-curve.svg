@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="380" viewBox="0 0 760 380" role="img" aria-labelledby="title desc">
+  <title id="title">Validation loss by training step</title>
+  <desc id="desc">The curve bottoms out around 4,000 steps and worsens by 10,000 steps.</desc>
+  <rect width="100%" height="100%" fill="#fbf8f1"/>
+  <text x="70" y="22" font-family="Georgia, serif" font-size="18" fill="#2f2924">Validation loss by training step</text>
+  <line x1="70" y1="325" x2="730" y2="325" stroke="#6f6258"/>
+  <line x1="70" y1="30" x2="70" y2="325" stroke="#6f6258"/>
+  <polyline fill="none" stroke="#9b4d2e" stroke-width="3" points="70.0,128.5 143.3,248.3 216.7,282.6 290.0,293.3 363.3,284.1 436.7,258.6 510.0,228.8 583.3,176.4 656.7,108.9 730.0,50.7"/>
+  <circle cx="70.0" cy="128.5" r="4" fill="#9b4d2e"/>
+  <circle cx="143.3" cy="248.3" r="4" fill="#9b4d2e"/>
+  <circle cx="216.7" cy="282.6" r="4" fill="#9b4d2e"/>
+  <circle cx="290.0" cy="293.3" r="4" fill="#9b4d2e"/>
+  <text x="298.0" y="285.3" font-size="13" fill="#42382f">4000: 1.236</text>
+  <circle cx="363.3" cy="284.1" r="4" fill="#9b4d2e"/>
+  <text x="371.3" y="276.1" font-size="13" fill="#42382f">5000: 1.261</text>
+  <circle cx="436.7" cy="258.6" r="4" fill="#9b4d2e"/>
+  <circle cx="510.0" cy="228.8" r="4" fill="#9b4d2e"/>
+  <circle cx="583.3" cy="176.4" r="4" fill="#9b4d2e"/>
+  <circle cx="656.7" cy="108.9" r="4" fill="#9b4d2e"/>
+  <circle cx="730.0" cy="50.7" r="4" fill="#9b4d2e"/>
+  <text x="656.0" y="42.7" font-size="13" fill="#42382f">10000: 1.894</text>
+  <text x="335.0" y="365" font-family="Arial, sans-serif" font-size="14" fill="#42382f">training step</text>
+  <text transform="translate(18 235.0) rotate(-90)" font-family="Arial, sans-serif" font-size="14" fill="#42382f">validation loss</text>
+</svg>

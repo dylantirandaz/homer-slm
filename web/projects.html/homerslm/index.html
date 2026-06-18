@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teaching a Tiny Model to Dream in Homer</title>
+    <meta
+      name="description"
+      content="A from-scratch byte-level language model trained only on the Odyssey, and what its checkpoints reveal about learning and overfitting."
+    />
+    <link rel="stylesheet" href="/projects.html/homerslm/styles.css" />
+  </head>
+  <body>
+    <div class="site">
+      <nav class="nav" aria-label="Site">
+        <a href="/">dylantirandaz</a>
+        <a href="/projects.html">projects</a>
+      </nav>
+
+      <article class="article">
+        <header>
+          <p class="kicker">Homer SLM</p>
+          <h1>Teaching a Tiny Model to Dream in Homer</h1>
+          <p class="dek">
+            I trained a five-million-parameter language model from scratch on one book: the Odyssey. The interesting part was not that it became good. It was watching when it started to overfit.
+          </p>
+          <div class="meta">
+            <span>Dylan Tirandaz</span>
+            <span>June 18, 2026</span>
+            <span>from-scratch byte GPT</span>
+          </div>
+        </header>
+
+        <nav class="toc" aria-label="Article sections">
+          <strong>Contents</strong>
+          <ol>
+            <li><a href="#setup">The setup</a></li>
+            <li><a href="#curve">The curve</a></li>
+            <li><a href="#samples">Checkpoint samples</a></li>
+            <li><a href="#learned">What it learned</a></li>
+            <li><a href="#copying">Was it copying?</a></li>
+            <li><a href="#reproduce">Reproduce it</a></li>
+          </ol>
+        </nav>
+
+        <p class="lede">
+          I wanted to know what a language model learns if its entire world is one book.
+        </p>
+        <p>
+          Not a pretrained model. Not a tokenizer trained on the internet. Not a chat model with hidden background knowledge. Just a randomly initialized transformer, byte tokens, and the body text of Samuel Butler's English <em>Odyssey</em>.
+        </p>
+        <p>
+          The result was not a good language model. That is the wrong standard for this experiment. The interesting part was watching the model move from noise, to English-like rhythm, to Odyssey-flavored imitation, and then into overfitting.
+        </p>
+
+        <section id="setup">
+          <h2>The Setup</h2>
+          <p>
+            The model is intentionally small. It is closer to a toy microscope than a product demo: small enough to understand as an experiment, large enough to show real learning dynamics.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Setting</th>
+                  <th class="number">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Parameters</td><td class="number">4,929,536</td></tr>
+                <tr><td>Layers</td><td class="number">6</td></tr>
+                <tr><td>Attention heads</td><td class="number">8</td></tr>
+                <tr><td>Hidden size</td><td class="number">256</td></tr>
+                <tr><td>Context</td><td class="number">256 bytes</td></tr>
+                <tr><td>Vocabulary</td><td class="number">256 raw byte values</td></tr>
+                <tr><td>Training text</td><td class="number">616,538 bytes</td></tr>
+                <tr><td>Training steps</td><td class="number">10,000</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            The constraint is the point: this model starts from random weights. It does not use Qwen, GPT, BPE tokenization, or any pretrained checkpoint. It sees byte sequences and learns to predict the next byte.
+          </p>
+        </section>
+
+        <section id="curve">
+          <h2>The First Surprise: More Training Was Not Better</h2>
+          <p>
+            The validation curve improved quickly, bottomed out around 4,000 steps, then got worse.
+          </p>
+
+          <figure class="figure">
+            <img src="/projects.html/homerslm/loss-curve.svg" alt="Validation loss curve bottoming near 4,000 steps and rising by 10,000 steps." />
+            <figcaption>
+              Validation loss reached its best observed point at 4,000 steps. The final checkpoint had a much lower training loss, but a much worse validation loss.
+            </figcaption>
+          </figure>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="number">Step</th>
+                  <th class="number">Validation loss</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="number">1,000</td><td class="number">1.683</td></tr>
+                <tr><td class="number">2,000</td><td class="number">1.358</td></tr>
+                <tr><td class="number">3,000</td><td class="number">1.265</td></tr>
+                <tr><td class="number">4,000</td><td class="number">1.236</td></tr>
+                <tr><td class="number">5,000</td><td class="number">1.261</td></tr>
+                <tr><td class="number">6,000</td><td class="number">1.330</td></tr>
+                <tr><td class="number">7,000</td><td class="number">1.411</td></tr>
+                <tr><td class="number">8,000</td><td class="number">1.553</td></tr>
+                <tr><td class="number">9,000</td><td class="number">1.736</td></tr>
+                <tr><td class="number">10,000</td><td class="number">1.894</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout">
+            <p>
+              The central finding: after roughly 4k-5k steps, this tiny model stopped learning a more general Odyssey-like distribution. It got better at the training slice and worse at held-out text.
+            </p>
+          </div>
+
+          <p>
+            The most annoying part is also the most honest part: I did not save a 4,000-step checkpoint. I saved at 2,500, 5,000, 7,500, and 10,000. So the best observed checkpoint by validation is 4k, but the best saved checkpoint is probably 5k.
+          </p>
+        </section>
+
+        <section id="samples">
+          <h2>What the Checkpoints Sounded Like</h2>
+          <p>
+            I used the same prompt and decoding settings for each checkpoint.
+          </p>
+
+          <pre><code>prompt = "Tell me, O Muse,"
+temperature = 0.45
+top_k = 20</code></pre>
+
+          <div class="sample-grid">
+            <section class="sample">
+              <h3>2.5k steps</h3>
+              <pre><code>Tell me, O Muse, sir, and I do not tell yet on who can shee the
+first of the suitors and on rocks; the was as I am to be in the stranger
+to asse a god diving to the sea...</code></pre>
+            </section>
+
+            <section class="sample">
+              <h3>5k steps</h3>
+              <pre><code>Tell me, O Muse, the son of Atreus, and take the stranger
+who was his perison are him with a pigs. The then went to the gods took
+the ship...
+
+Then Ulysses answered, "King Alcinous..."</code></pre>
+            </section>
+
+            <section class="sample">
+              <h3>7.5k steps</h3>
+              <pre><code>Tell me, O Muse, son of Elpenor, son of Pastrowia, and she had
+compassion castriors; still, and when she had come up to my own gods...</code></pre>
+            </section>
+
+            <section class="sample">
+              <h3>10k steps</h3>
+              <pre><code>Tell me, O Muse, and Telemachus wept for a fashion ship in
+the far from lawful and in the house of king'...</code></pre>
+            </section>
+          </div>
+
+          <p>
+            At 2.5k steps, the model has learned local texture: gods, suitors, ships, strangers, the sea. At 5k, it has a better sense of scene structure: names, reported speech, and the recurring social machinery of the poem. After that, it becomes more confident but not simply better.
+          </p>
+        </section>
+
+        <section id="learned">
+          <h2>What It Learned</h2>
+          <p>
+            This model did not learn the <em>Odyssey</em> in the human sense. It did not learn that Odysseus wants home, that hospitality has moral weight, or that divine intervention structures the plot.
+          </p>
+          <p>
+            But it did learn statistical shadows of the poem:
+          </p>
+          <ul>
+            <li>Names: <code>Ulysses</code>, <code>Telemachus</code>, <code>Eumaeus</code>, <code>Alcinous</code>, <code>Calypso</code></li>
+            <li>Settings: ships, sea, houses, shore, Troy, Ithaca</li>
+            <li>Social scenes: strangers arriving, hosts answering, suitors speaking, people sitting down</li>
+            <li>Repeated syntax: <code>Then X answered</code>, <code>the son of</code>, <code>the gods</code>, <code>on board</code></li>
+            <li>Epic texture: speech, lineage, movement, return</li>
+          </ul>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Checkpoint</th>
+                  <th class="number">Words</th>
+                  <th class="number">Odyssey term hits</th>
+                  <th class="number">Training 8-gram overlaps</th>
+                  <th class="number">Repeated bigrams</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>2.5k</td><td class="number">151</td><td class="number">5</td><td class="number">0</td><td class="number">22</td></tr>
+                <tr><td>5k</td><td class="number">128</td><td class="number">12</td><td class="number">0</td><td class="number">12</td></tr>
+                <tr><td>7.5k</td><td class="number">131</td><td class="number">3</td><td class="number">0</td><td class="number">6</td></tr>
+                <tr><td>10k</td><td class="number">127</td><td class="number">5</td><td class="number">0</td><td class="number">6</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            The 5k sample had the strongest Odyssey-term density in my comparison: 12 Odyssey term hits in a 128-word sample. It also had fewer repeated bigrams than the 2.5k sample. That made it the most interesting saved checkpoint, even though the best validation score happened one thousand steps earlier.
+          </p>
+        </section>
+
+        <section id="copying">
+          <h2>Was It Just Copying?</h2>
+          <p>
+            I checked generated 8-word sequences against the training text. For these samples, there were zero exact 8-gram overlaps with the source text.
+          </p>
+          <p>
+            That does not prove the model was not memorizing. A tiny byte model can memorize texture and fragments without reproducing long exact spans. But it does suggest these samples are not just copied chunks pasted out of the training file.
+          </p>
+          <p>
+            The better description is imitation under constraint. The model learned local rhythms and vocabulary, but not enough structure to sustain clean prose.
+          </p>
+        </section>
+
+        <section id="reproduce">
+          <h2>Reproducing It</h2>
+          <p>Train the larger scratch model:</p>
+          <pre><code>make train-scratch</code></pre>
+
+          <p>Generate from the best saved checkpoint:</p>
+          <pre><code>.venv/bin/python scripts/generate_scratch.py \
+  --checkpoint outputs/scratch/odyssey-byte-gpt-10k \
+  --weights 005000_weights.safetensors \
+  --prompt "Tell me, O Muse," \
+  --tokens 1000 \
+  --temperature 0.45 \
+  --top-k 20</code></pre>
+
+          <p>Regenerate the local supporting artifacts:</p>
+          <pre><code>make blog-artifacts</code></pre>
+
+          <h2>Next Experiment</h2>
+          <p>
+            The obvious next run is not 20,000 steps. It is a better checkpoint schedule around the interesting region:
+          </p>
+          <pre><code>save every 500 steps from 2,500 to 5,500</code></pre>
+
+          <p>
+            I would also try a tokenizer trained only on the <em>Odyssey</em>, a slightly longer context window, temperature sweeps for each checkpoint, and training on the <em>Iliad</em> plus the <em>Odyssey</em> to see whether the model learns a broader Homeric register.
+          </p>
+
+          <p>
+            The core result still stands: a tiny model trained from scratch on one ancient epic does not understand Homer. But it does learn to dream in the statistical accent of Homer, and there is a narrow window before that dream turns into memorization.
+          </p>
+        </section>
+
+        <footer class="foot">
+          <p>
+            Built from the Homer SLM experiment. The reference style was a research-blog post: direct prose, visible outputs, and enough numbers to make the story falsifiable.
+          </p>
+        </footer>
+      </article>
+    </div>
+  </body>
+</html>

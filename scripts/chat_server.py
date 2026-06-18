@@ -357,6 +357,8 @@ def make_handler(chat_model: OdysseyChatModel):
             if path == "/":
                 path = "/index.html"
             target = (WEB_ROOT / path.lstrip("/")).resolve()
+            if target.is_dir():
+                target = target / "index.html"
             if not str(target).startswith(str(WEB_ROOT.resolve())) or not target.exists() or target.is_dir():
                 self.send_error(404)
                 return
