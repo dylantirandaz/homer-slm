@@ -47,6 +47,16 @@ make pretrain-data
 make train-full
 ```
 
+For from-scratch pretraining, use the byte-level GPT path:
+
+```bash
+make train-scratch
+make generate-scratch
+```
+
+This initializes a small transformer randomly and trains it only on the Odyssey body text. It does not use Qwen weights or a pretrained tokenizer. The default scratch run is 3,000 iterations.
+The scratch model is a generation model, not an instruction/chat model; use it to inspect what the randomly initialized model absorbs from the Odyssey text.
+
 The adapter is written to:
 
 ```text
@@ -57,6 +67,12 @@ The full-parameter continued-training output is written to:
 
 ```text
 outputs/adapters/odyssey-qwen25-0.5b-full/
+```
+
+The from-scratch checkpoint is written to:
+
+```text
+outputs/scratch/odyssey-byte-gpt/
 ```
 
 Training data is written to:

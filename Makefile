@@ -5,12 +5,15 @@ MODEL_ID ?= mlx-community/Qwen2.5-0.5B-Instruct-4bit
 FULL_MODEL_ID ?= mlx-community/Qwen2.5-0.5B-Instruct-bf16
 ADAPTER ?= outputs/adapters/odyssey-qwen25-0.5b
 FULL_ADAPTER ?= outputs/adapters/odyssey-qwen25-0.5b-full
+SCRATCH_OUT ?= outputs/scratch/odyssey-byte-gpt
+SCRATCH_ITERS ?= 3000
+SCRATCH_PROMPT ?= Tell me, O Muse,
 PORT ?= 8765
 CHAT_TEMPERATURE ?= 0.65
 CHAT_TOP_P ?= 0.9
 CHAT_TOP_K ?= 40
 
-.PHONY: help setup data pretrain-data train train-full chat chat-full output-dirs
+.PHONY: help setup data pretrain-data train train-full train-scratch generate-scratch chat chat-full output-dirs
 
 help:
 	@printf "Minimum Viable Odyssey\n\n"
@@ -20,6 +23,8 @@ help:
 	@printf "  pretrain-data  Prepare plain-text Odyssey continuation data\n"
 	@printf "  train   Run MLX LoRA chat/summarization tuning for MODEL_ID\n"
 	@printf "  train-full  Run full-parameter continued training on Odyssey text\n"
+	@printf "  train-scratch  Pretrain a random-initialized byte GPT on Odyssey text\n"
+	@printf "  generate-scratch  Generate text from the scratch byte GPT\n"
 	@printf "  chat    Serve the local Odyssey SLM chat UI with probabilistic decoding\n"
 	@printf "  chat-full  Serve the full-trained Odyssey SLM chat UI\n"
 
@@ -30,7 +35,7 @@ setup:
 	$(PY) -m pip install -r requirements-mlx.txt
 
 output-dirs:
-	mkdir -p data/raw data/processed data/training/mlx data/training/pretrain outputs/adapters
+	mkdir -p data/raw data/processed data/training/mlx data/training/pretrain outputs/adapters outputs/scratch
 
 data: output-dirs
 	$(PYTHON) scripts/download_odyssey.py
@@ -44,6 +49,12 @@ train: output-dirs
 
 train-full: output-dirs
 	$(PY) scripts/train_lora.py --fine-tune-type full --model-id $(FULL_MODEL_ID) --data data/training/pretrain --adapter-path $(FULL_ADAPTER) --iters 50 --batch-size 1 --num-layers -1 --learning-rate 5e-6 --no-mask-prompt --grad-checkpoint --steps-per-report 5 --steps-per-eval 25 --save-every 50 --max-seq-length 1024
+
+train-scratch: output-dirs
+	$(PY) scripts/pretrain_scratch.py --out $(SCRATCH_OUT) --iters $(SCRATCH_ITERS)
+
+generate-scratch:
+	$(PY) scripts/generate_scratch.py --checkpoint $(SCRATCH_OUT) --prompt "$(SCRATCH_PROMPT)"
 
 chat:
 	$(PY) scripts/chat_server.py --model-id $(MODEL_ID) --adapter-path $(ADAPTER) --port $(PORT) --temperature $(CHAT_TEMPERATURE) --top-p $(CHAT_TOP_P) --top-k $(CHAT_TOP_K)
